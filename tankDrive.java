@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 
 @TeleOp (name = "Drive")
@@ -16,7 +17,7 @@ public class tankDrive extends OpMode {
 
     DcMotor intakeMotor;
 
-    boolean intakeToggle = true;
+    boolean intakeToggle = false;
 
     Gamepad currentGamepad1 = new Gamepad();
     Gamepad currentGamepad2 = new Gamepad();
@@ -61,20 +62,49 @@ public class tankDrive extends OpMode {
         rightRear.setPower(rightPower);
 
 
-        if (currentGamepad1.right_bumper && !previousGamepad1.right_bumper) {
-            // This will set intakeToggle to true if it was previously false
-            // and intakeToggle to false if it was previously true,
-            // providing a toggling behavior.
-            intakeToggle = !intakeToggle;
-        }
+        @TeleOp(name = "Intake Toggle")
+        class IntakeToggle extends LinearOpMode {
 
-        if (intakeToggle) {
-            intakeMotor.setPower(1);
-        }
-        else {
-            intakeMotor.setPower(0);
-        }
+            private DcMotor intakeMotor;
+
+            @Override
+            public void runOpMode() {
+
+                intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
+
+                Gamepad currentGamepad1 = new Gamepad();
+                Gamepad previousGamepad1 = new Gamepad();
+
+                boolean intakeOn = false;
+
+                waitForStart();
+
+                while (opModeIsActive()) {
+
+                    // Store gamepad states
+                    previousGamepad1.copy(currentGamepad1);
+                    currentGamepad1.copy(gamepad1);
+
+                    // Toggle intake when A is pressed
+                    if (currentGamepad1.a && !previousGamepad1.a) {
+                        intakeOn = !intakeOn;
+                    }
+
+                    // Run intake based on toggle state
+                    if (intakeOn) {
+                        intakeMotor.setPower(1.0);
+                    } else {
+                        intakeMotor.setPower(0.0);
+                    }
+
+                    telemetry.addData("Intake", intakeOn ? "ON" : "OFF");
+                    telemetry.update();
+                }
 
 
+            }
+
+
+        }
     }
 }
